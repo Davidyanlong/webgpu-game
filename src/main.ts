@@ -1,12 +1,13 @@
 import shaderSource from './shader/shader.wgsl?raw'
 import { QuadGeometry } from './geometry';
 import { Texture } from './texture';
-
+import { BufferUtil } from './buffer-util';
 class Renderer {
   #context!: GPUCanvasContext;
   #device!: GPUDevice;
   #pipline!: GPURenderPipeline;
   #positionBuffer!: GPUBuffer;
+  #IndicesBuffer!: GPUBuffer;
   #colorBuffer!: GPUBuffer;
   #texCoordBuffer!: GPUBuffer;
   #textureBindGroup!: GPUBindGroup;
@@ -44,30 +45,15 @@ class Renderer {
     const geometry = new QuadGeometry();
 
 
-    this.#positionBuffer = this.createBuffer(new Float32Array(geometry.positions));
+    this.#positionBuffer = BufferUtil.createVertexBuffer(this.#device, new Float32Array(geometry.positions));
 
-    this.#colorBuffer = this.createBuffer(new Float32Array(geometry.colors));
+    this.#colorBuffer = BufferUtil.createVertexBuffer(this.#device, new Float32Array(geometry.colors));
 
-    this.#texCoordBuffer = this.createBuffer(new Float32Array(geometry.texCoords));
+    this.#texCoordBuffer = BufferUtil.createVertexBuffer(this.#device, new Float32Array(geometry.texCoords));
 
+    this.#IndicesBuffer = BufferUtil.createIndexBuffer(this.#device, new Uint16Array(geometry.indices));
 
   }
-
-  private createBuffer(data: Float32Array): GPUBuffer {
-
-    const buffer = this.#device.createBuffer({
-      size: data.byteLength,
-      usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-      mappedAtCreation: true
-    });
-
-    new Float32Array(buffer.getMappedRange()).set(data);
-
-    buffer.unmap();
-
-    return buffer;
-  }
-
 
   private prepareModel() {
     const shaderModule = this.#device.createShaderModule({
@@ -201,11 +187,12 @@ class Renderer {
 
     const passEncoder = commandEncoder.beginRenderPass(renderPassDescription);
     passEncoder.setPipeline(this.#pipline);
+    passEncoder.setIndexBuffer(this.#IndicesBuffer,'uint16');
     passEncoder.setVertexBuffer(0, this.#positionBuffer);
     passEncoder.setVertexBuffer(1, this.#colorBuffer);
     passEncoder.setVertexBuffer(2, this.#texCoordBuffer);
     passEncoder.setBindGroup(0, this.#textureBindGroup)
-    passEncoder.draw(6, 1, 0, 0);
+    passEncoder.drawIndexed(6);
     passEncoder.end();
     this.#device.queue.submit([commandEncoder.finish()]);
 
