@@ -1,14 +1,16 @@
 struct VertexOut {
     @builtin(position) position:vec4f,
-    @location(0) color:vec4f,
-    @location(1) texCoord:vec2f,
+    @location(0) texCoord:vec2f,
+    @location(1) color:vec4f,
+
 };
 
 @vertex
 fn vertexMain(
     @location(0) pos:vec2f,
-    @location(1) color:vec3f,
-    @location(2) texCoord:vec2f
+    @location(1) texCoord:vec2f,
+    @location(2) color:vec3f,
+
 )->VertexOut
 {
     var output:VertexOut;
@@ -27,7 +29,7 @@ var tex:texture_2d<f32>;
 
 
 @fragment
-fn fragmentMain(@location(0) color:vec4f, @location(1) texCoord:vec2f)->@location(0) vec4f
+fn fragmentMain(@location(0) texCoord:vec2f, @location(1) color:vec4f)->@location(0) vec4f
 {
     var textureColor = textureSample(tex, texSampler, texCoord);
     return color * textureColor;
