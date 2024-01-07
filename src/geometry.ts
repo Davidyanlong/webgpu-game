@@ -1,19 +1,26 @@
 export class QuadGeometry {
-    public vertices: number[]
-    public indices: number[]
+    public vertices: number[];
+    public indices: number[];
 
     constructor() {
 
+        const x = 100;
+        const y = 100;
+        const w = 99;
+        const h = 75;
+
         this.vertices = [
-            // x y           u v         r g b
-            -0.5, -0.5,    0.0, 1.0,     1.0, 1.0, 1.0,
-            0.5, -0.5,     1.0, 1.0,     1.0, 1.0, 1.0,
-            -0.5, 0.5,     0.0, 0.0,     1.0, 1.0, 1.0,
-            0.5, 0.5,      1.0, 0.0,     1.0, 1.0, 1.0,  
-        ]
+            // x y            u v           r g b 
+            x, y,            0.0, 0.0, 1.0, 1.0, 1.0, // top left 
+            x + w, y,        1.0, 0.0, 1.0, 1.0, 1.0, // top right
+            x + w, y + h,    1.0, 1.0, 1.0, 1.0, 1.0, // bottom right
+            x, y + h,        0.0, 1.0, 1.0, 1.0, 1.0, // bottom left 
+        ];
+
         this.indices = [
             0, 1, 2,
-            1, 2, 3
-        ]
+            2, 3, 0
+        ];
     }
+
 }

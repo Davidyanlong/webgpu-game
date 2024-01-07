@@ -1,20 +1,36 @@
-import shaderSource from './shader/shader.wgsl?raw'
+import shaderSource from './shaders/shader.wgsl?raw'
 import { QuadGeometry } from './geometry';
 import { Texture } from './texture';
 import { BufferUtil } from './buffer-util';
+import { Camera } from './camera';
+import { Content } from './content';
+
 class Renderer {
   #context!: GPUCanvasContext;
   #device!: GPUDevice;
   #pipline!: GPURenderPipeline;
   #vertexBuffer!: GPUBuffer;
   #IndicesBuffer!: GPUBuffer;
+
+
+  #projectViewBindGroup!: GPUBindGroup;
+  #projectviewMatrixBuffer!: GPUBuffer;
   #textureBindGroup!: GPUBindGroup;
-  #testTexture!: Texture;
+  #camera!: Camera;
+  private testTexture!: Texture;
 
   constructor() {
   }
   public async initalize() {
     const canvas = document.getElementById("canvasDom") as HTMLCanvasElement;
+    
+    if(canvas.width != canvas.clientWidth){
+      canvas.width = canvas.clientWidth;
+      canvas.height = canvas.clientHeight;
+    }
+
+    this.#camera = new Camera(canvas.width, canvas.height);
+
     this.#context = canvas.getContext("webgpu") as GPUCanvasContext;
     if (!this.#context) {
       throw new Error("WebGPU not supported");
@@ -30,23 +46,21 @@ class Renderer {
 
     this.#device = await adapter.requestDevice();
 
+    await Content.initialize(this.#device);
+
     const format = navigator.gpu.getPreferredCanvasFormat();
 
     this.#context.configure({
       device: this.#device,
       format
     })
-
-    this.#testTexture = await Texture.createTexureFromURL(this.#device, "./assets/awesomeface.png");
-    this.prepareModel()
-
+    this.testTexture = await Texture.createTextureFromURL(this.#device, "assets/awesomeface.png");
     const geometry = new QuadGeometry();
 
-
+    this.#projectviewMatrixBuffer = BufferUtil.createUniformBuffer(this.#device, new Float32Array(16));
     this.#vertexBuffer = BufferUtil.createVertexBuffer(this.#device, new Float32Array(geometry.vertices));
-
     this.#IndicesBuffer = BufferUtil.createIndexBuffer(this.#device, new Uint16Array(geometry.indices));
-
+    this.prepareModel()
   }
 
   private prepareModel() {
@@ -104,6 +118,21 @@ class Renderer {
       }]
     };
 
+   
+
+
+
+
+    const projectViewBindGroupLayout = this.#device.createBindGroupLayout({
+      entries: [{
+        binding: 0,
+        visibility: GPUShaderStage.VERTEX,
+        buffer: {
+          type: "uniform"
+        }
+      }]
+    });
+
     const textureBindGroupLayout = this.#device.createBindGroupLayout({
       entries: [
         {
@@ -119,10 +148,10 @@ class Renderer {
       ]
     });
 
-
     const pipelineLayout = this.#device.createPipelineLayout({
       bindGroupLayouts: [
-        textureBindGroupLayout
+        projectViewBindGroupLayout,
+        textureBindGroupLayout,
       ],
     });
 
@@ -130,13 +159,27 @@ class Renderer {
       layout: textureBindGroupLayout,
       entries: [{
         binding: 0,
-        resource: this.#testTexture.sampler
+        resource: Content.playerTexture.sampler
       }, {
         binding: 1,
-        resource: this.#testTexture.texture.createView()
+        resource: Content.playerTexture.texture.createView()
       }]
     });
 
+   
+
+
+    this.#projectViewBindGroup = this.#device.createBindGroup({
+      layout: projectViewBindGroupLayout,
+      entries: [{
+        binding: 0,
+        resource: {
+          buffer: this.#projectviewMatrixBuffer
+        }
+      }]
+    })
+
+   
 
     this.#pipline = this.#device.createRenderPipeline({
       vertex: vertexState,
@@ -150,6 +193,7 @@ class Renderer {
   }
   public draw() {
 
+    this.#camera.update();
     const commandEncoder = this.#device.createCommandEncoder();
     const texttureView = this.#context.getCurrentTexture().createView();
     const renderPassDescription: GPURenderPassDescriptor = {
@@ -164,10 +208,18 @@ class Renderer {
     }
 
     const passEncoder = commandEncoder.beginRenderPass(renderPassDescription);
+
+    
+    this.#device.queue.writeBuffer(
+      this.#projectviewMatrixBuffer,
+      0, 
+      this.#camera.projectionViewMatrix as Float32Array);
+
     passEncoder.setPipeline(this.#pipline);
-    passEncoder.setIndexBuffer(this.#IndicesBuffer,'uint16');
+    passEncoder.setIndexBuffer(this.#IndicesBuffer, 'uint16');
     passEncoder.setVertexBuffer(0, this.#vertexBuffer);
-    passEncoder.setBindGroup(0, this.#textureBindGroup)
+    passEncoder.setBindGroup(0, this.#projectViewBindGroup)
+    passEncoder.setBindGroup(1, this.#textureBindGroup)
     passEncoder.drawIndexed(6);
     passEncoder.end();
     this.#device.queue.submit([commandEncoder.finish()]);
