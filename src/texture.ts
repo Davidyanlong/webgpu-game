@@ -1,5 +1,5 @@
 export class Texture {
-    constructor(public texture: GPUTexture, public sampler: GPUSampler) { }
+    constructor(public texture: GPUTexture, public sampler: GPUSampler, public id:string) { }
 
     /**
      * Create a placeholder texture for WebGPU texture and sampler
@@ -27,7 +27,7 @@ export class Texture {
             minFilter: "linear"
         });
 
-        return new Texture(texture, sampler);
+        return new Texture(texture, sampler, image.src);
     }
 
     /**

@@ -6,6 +6,7 @@ import { Camera } from './camera';
 import { Content } from './content';
 import { Rect } from './rect';
 import { SpritePipeline } from './sprite-pipeline';
+import { SpriteRenderer } from './sprite-renderer';
 
 class Renderer {
   #canvas!: HTMLCanvasElement;
@@ -14,25 +15,18 @@ class Renderer {
 
   #passEncoder!: GPURenderPassEncoder;
 
-  #IndicesBuffer!: GPUBuffer;
-  #projectviewMatrixBuffer!: GPUBuffer;
+  #spriteRenderer!: SpriteRenderer;
 
-  #vertexData: Float32Array = new Float32Array(7 * 4);
-  #camera!: Camera;
 
 
   constructor() {
   }
   public async initalize() {
     this.#canvas = document.getElementById("canvasDom") as HTMLCanvasElement;
-
     if (this.#canvas.width != this.#canvas.clientWidth) {
       this.#canvas.width = this.#canvas.clientWidth;
       this.#canvas.height = this.#canvas.clientHeight;
     }
-
-    this.#camera = new Camera(this.#canvas.width, this.#canvas.height);
-
     this.#context = this.#canvas.getContext("webgpu") as GPUCanvasContext;
     if (!this.#context) {
       throw new Error("WebGPU not supported");
@@ -57,17 +51,13 @@ class Renderer {
       format
     })
 
-    this.#projectviewMatrixBuffer = BufferUtil.createUniformBuffer(this.#device, new Float32Array(16));
-    // this.#vertexBuffer = BufferUtil.createVertexBuffer(this.#device, this.#vertexData);
-    this.#IndicesBuffer = BufferUtil.createIndexBuffer(this.#device, new Uint16Array([
-      0, 1, 2,
-      2, 3, 0
-    ]));
+   this.#spriteRenderer = new SpriteRenderer(this.#device, this.#canvas.width, this.#canvas.height)
+   this.#spriteRenderer.initialize()
   }
 
   public draw() {
 
-    this.#camera.update();
+
     const commandEncoder = this.#device.createCommandEncoder();
     const texttureView = this.#context.getCurrentTexture().createView();
     const renderPassDescription: GPURenderPassDescriptor = {
@@ -82,84 +72,32 @@ class Renderer {
     }
 
     this.#passEncoder = commandEncoder.beginRenderPass(renderPassDescription);
-
+    this.#spriteRenderer.framePass(this.#passEncoder);
     //DrAW HERE
-    for (let i = 0; i < 50; i++) {
-      this.drawSprite(Content.playerTexture, new Rect(
+    for (let i = 0; i < 20000; i++) {
+      this.#spriteRenderer.drawSprite(Content.playerTexture, new Rect(
         this.#canvas.width * Math.random(),
         this.#canvas.height * Math.random(),
-        100, 100
+        10, 10
         ));
     }
 
-    for (let i = 0; i < 50; i++) {
-      this.drawSprite(Content.ufoRedTexture, new Rect(
+    for (let i = 0; i < 20000; i++) {
+      this.#spriteRenderer.drawSprite(Content.ufoRedTexture, new Rect(
         this.#canvas.width * Math.random(),
         this.#canvas.height * Math.random(),
-        100, 100
+        10, 10
         ));
     }
+
+    this.#spriteRenderer.framEnd()
 
     // END DRAW HERE
     this.#passEncoder.end();
     this.#device.queue.submit([commandEncoder.finish()]);
-
+     requestAnimationFrame(this.draw.bind(this));
   }
-  public drawSprite(texture: Texture, rect: Rect) {
-
-    const spritePipeline = SpritePipeline.create(this.#device, texture, this.#projectviewMatrixBuffer);
-
-    // top left
-    this.#vertexData[0] = rect.x;
-    this.#vertexData[1] = rect.y;
-    this.#vertexData[2] = 0;
-    this.#vertexData[3] = 0;
-    this.#vertexData[4] = 1.0;
-    this.#vertexData[5] = 1.0;
-    this.#vertexData[6] = 1.0;
-
-    // top right
-    this.#vertexData[7] = rect.x + rect.width;
-    this.#vertexData[8] = rect.y;
-    this.#vertexData[9] = 1.0;
-    this.#vertexData[10] = 0;
-    this.#vertexData[11] = 1.0;
-    this.#vertexData[12] = 1.0;
-    this.#vertexData[13] = 1.0;
-
-    // bottom right
-    this.#vertexData[14] = rect.x + rect.width;
-    this.#vertexData[15] = rect.y + rect.height;
-    this.#vertexData[16] = 1.0;
-    this.#vertexData[17] = 1.0;
-    this.#vertexData[18] = 1.0;
-    this.#vertexData[19] = 1.0;
-    this.#vertexData[20] = 1.0;
-
-    // bottom left
-    this.#vertexData[21] = rect.x;
-    this.#vertexData[22] = rect.y + rect.height;
-    this.#vertexData[23] = 0.0;
-    this.#vertexData[24] = 1.0;
-    this.#vertexData[25] = 1.0;
-    this.#vertexData[26] = 1.0;
-    this.#vertexData[27] = 1.0;
-
-    const vertexBuffer = BufferUtil.createVertexBuffer(this.#device, this.#vertexData);
-
-    this.#device.queue.writeBuffer(
-      this.#projectviewMatrixBuffer,
-      0,
-      this.#camera.projectionViewMatrix as Float32Array);
-
-    this.#passEncoder.setPipeline(spritePipeline.pipeline);
-    this.#passEncoder.setIndexBuffer(this.#IndicesBuffer, 'uint16');
-    this.#passEncoder.setVertexBuffer(0, vertexBuffer);
-    this.#passEncoder.setBindGroup(0, spritePipeline.projectionViewBindGroup)
-    this.#passEncoder.setBindGroup(1, spritePipeline.textureBindGroup)
-    this.#passEncoder.drawIndexed(6);
-
-  }
+  
 
 }
 
