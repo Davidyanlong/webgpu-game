@@ -1,5 +1,6 @@
 import { BufferUtil } from "./buffer-util";
 import { Camera } from "./camera";
+import { Color } from "./color";
 import { Rect } from "./rect";
 import { SpritePipeline } from "./sprite-pipeline";
 import { Texture } from "./texture";
@@ -18,8 +19,8 @@ export class BatchDrawCall {
 
 export class SpriteRenderer {
 
-    #vertexData: Float32Array = new Float32Array(7 * 4);
-    #currentTexture!: Texture;
+    #defaultColor = new Color();
+    #currentTexture: Texture|null = null;
     #IndicesBuffer!: GPUBuffer;
     #projectviewMatrixBuffer!: GPUBuffer;
     #camera: Camera;
@@ -67,6 +68,8 @@ export class SpriteRenderer {
     public framePass(passEncoder: GPURenderPassEncoder) {
         this.#passEncoder = passEncoder;
         this.#batchDrawCallPerTexture = {}
+        this.#currentTexture = null
+
         this.#camera.update();
         this.device.queue.writeBuffer(
             this.#projectviewMatrixBuffer,
@@ -142,6 +145,82 @@ export class SpriteRenderer {
 
         
     }
+
+    public drawSpriteSource(texture: Texture, rect: Rect, sourceRect:Rect, color = this.#defaultColor) {
+
+        if (this.#currentTexture != texture) {
+            this.#currentTexture = texture
+
+            let pipeline = this.#pipelinePerTexture[texture.id]
+            if (!pipeline) {
+                pipeline = SpritePipeline.create(this.device, texture, this.#projectviewMatrixBuffer)
+                this.#pipelinePerTexture[texture.id] = pipeline
+            }
+            let batchDrawCalls = this.#batchDrawCallPerTexture[texture.id]
+            if (!batchDrawCalls) {
+                this.#batchDrawCallPerTexture[texture.id] = []
+            }
+        }
+        const arrayofBatchDrawCalls = this.#batchDrawCallPerTexture[texture.id]
+        let batchDrawCall = arrayofBatchDrawCalls[arrayofBatchDrawCalls.length - 1]
+        if (!batchDrawCall) {
+            batchDrawCall = new BatchDrawCall(this.#pipelinePerTexture[texture.id])
+            this.#batchDrawCallPerTexture[texture.id].push(batchDrawCall)
+        }
+
+        let i = batchDrawCall.instanceCount * FLOATS_PER_SPRITE;
+
+        let u0 = sourceRect.x/ texture.width;
+        let v0 = sourceRect.y/ texture.height;
+        let u1 = (sourceRect.x + sourceRect.width)/ texture.width;
+        let v1 = (sourceRect.y + sourceRect.height)/ texture.height;
+
+        // top left
+        batchDrawCall.vertexData[0 + i] = rect.x;
+        batchDrawCall.vertexData[1 + i] = rect.y;
+        batchDrawCall.vertexData[2 + i] = u0;
+        batchDrawCall.vertexData[3 + i] = v0;
+        batchDrawCall.vertexData[4 + i] = color.r;
+        batchDrawCall.vertexData[5 + i] = color.g;
+        batchDrawCall.vertexData[6 + i] = color.b;
+
+        // top right
+        batchDrawCall.vertexData[7 + i] = rect.x + rect.width;
+        batchDrawCall.vertexData[8 + i] = rect.y;
+        batchDrawCall.vertexData[9 + i] = u1;
+        batchDrawCall.vertexData[10 + i] = v0;
+        batchDrawCall.vertexData[11 + i] = color.r;
+        batchDrawCall.vertexData[12 + i] = color.g;
+        batchDrawCall.vertexData[13 + i] = color.b;
+
+        // bottom right
+        batchDrawCall.vertexData[14 + i] = rect.x + rect.width;
+        batchDrawCall.vertexData[15 + i] = rect.y + rect.height;
+        batchDrawCall.vertexData[16 + i] = u1;
+        batchDrawCall.vertexData[17 + i] = v1;
+        batchDrawCall.vertexData[18 + i] = color.r;
+        batchDrawCall.vertexData[19 + i] = color.g;
+        batchDrawCall.vertexData[20 + i] = color.b;
+
+        // bottom left
+        batchDrawCall.vertexData[21 + i] = rect.x;
+        batchDrawCall.vertexData[22 + i] = rect.y + rect.height;
+        batchDrawCall.vertexData[23 + i] = u0;
+        batchDrawCall.vertexData[24 + i] = v1;
+        batchDrawCall.vertexData[25 + i] = color.r;
+        batchDrawCall.vertexData[26 + i] = color.g;
+        batchDrawCall.vertexData[27 + i] = color.b;
+        
+        batchDrawCall.instanceCount++;
+
+        if(batchDrawCall.instanceCount >= MAX_NUMBER_OF_SPRITES) {
+            const newBatchDrawCall = new BatchDrawCall(this.#pipelinePerTexture[texture.id]);
+            this.#batchDrawCallPerTexture[texture.id].push(newBatchDrawCall);
+        }
+
+        
+    }
+
     public framEnd() {
         let usedVertexBuffers = []
 

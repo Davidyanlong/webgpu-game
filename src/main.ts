@@ -7,6 +7,7 @@ import { Content } from './content';
 import { Rect } from './rect';
 import { SpritePipeline } from './sprite-pipeline';
 import { SpriteRenderer } from './sprite-renderer';
+import { Color } from './color';
 
 class Renderer {
   #canvas!: HTMLCanvasElement;
@@ -74,6 +75,7 @@ class Renderer {
     this.#passEncoder = commandEncoder.beginRenderPass(renderPassDescription);
     this.#spriteRenderer.framePass(this.#passEncoder);
     //DrAW HERE
+    /*
     for (let i = 0; i < 20000; i++) {
       this.#spriteRenderer.drawSprite(Content.playerTexture, new Rect(
         this.#canvas.width * Math.random(),
@@ -89,6 +91,37 @@ class Renderer {
         10, 10
         ));
     }
+    */
+
+    const playerSprite = Content.sprites["playerShip1_blue.png"];
+
+    playerSprite.drawRect.x +=0.7
+    playerSprite.drawRect.y +=0.7
+
+    const color = new Color(1, 0, 0);
+    this.#spriteRenderer.drawSpriteSource(playerSprite.texture, 
+      playerSprite.drawRect, 
+      playerSprite.sourceRect,
+      color);
+
+    const shield = Content.sprites["shield1.png"]
+
+    shield.drawRect.x = playerSprite.drawRect.x - 13
+    shield.drawRect.y = playerSprite.drawRect.y - 12
+
+    this.#spriteRenderer.drawSpriteSource(shield.texture, 
+      shield.drawRect, 
+      shield.sourceRect,
+      new Color(0, 0, 1));
+
+
+    const drawRect = new Rect(0, 0, 200, 200);
+    const halfHeight = Content.uvTexture.height / 2
+    const halfWidth = Content.uvTexture.width / 2
+    const sourceRect = new Rect(0, 0, halfWidth, halfHeight);
+
+
+    this.#spriteRenderer.drawSpriteSource(Content.uvTexture, drawRect, sourceRect);
 
     this.#spriteRenderer.framEnd()
 
