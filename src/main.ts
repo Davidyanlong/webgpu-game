@@ -8,6 +8,7 @@ import { Rect } from './rect';
 import { SpritePipeline } from './sprite-pipeline';
 import { SpriteRenderer } from './sprite-renderer';
 import { Color } from './color';
+import { vec2 } from 'gl-matrix';
 
 class Renderer {
   #canvas!: HTMLCanvasElement;
@@ -18,7 +19,7 @@ class Renderer {
 
   #spriteRenderer!: SpriteRenderer;
 
-
+  #rotation = 0
 
   constructor() {
   }
@@ -92,17 +93,19 @@ class Renderer {
         ));
     }
     */
-
+    this.#rotation +=0.01
     const playerSprite = Content.sprites["playerShip1_blue.png"];
 
     playerSprite.drawRect.x +=0.7
     playerSprite.drawRect.y +=0.7
 
-    const color = new Color(1, 0, 0);
+
+    const color = new Color(1, 1, 1);
     this.#spriteRenderer.drawSpriteSource(playerSprite.texture, 
       playerSprite.drawRect, 
       playerSprite.sourceRect,
-      color);
+      color, this.#rotation,
+      vec2.fromValues(0.5, 0.5));
 
     const shield = Content.sprites["shield1.png"]
 
@@ -112,16 +115,19 @@ class Renderer {
     this.#spriteRenderer.drawSpriteSource(shield.texture, 
       shield.drawRect, 
       shield.sourceRect,
-      new Color(0, 0, 1));
+      new Color(0, 0, 1), 
+      this.#rotation,
+      vec2.fromValues(0.5, 0.5));
 
 
-    const drawRect = new Rect(0, 0, 200, 200);
+    const drawRect = new Rect(100, 100, 200, 200);
     const halfHeight = Content.uvTexture.height / 2
     const halfWidth = Content.uvTexture.width / 2
     const sourceRect = new Rect(0, 0, halfWidth, halfHeight);
 
 
-    this.#spriteRenderer.drawSpriteSource(Content.uvTexture, drawRect, sourceRect);
+    this.#spriteRenderer.drawSpriteSource(Content.uvTexture, drawRect, sourceRect, undefined, 
+      this.#rotation, vec2.fromValues(1, 1));
 
     this.#spriteRenderer.framEnd()
 

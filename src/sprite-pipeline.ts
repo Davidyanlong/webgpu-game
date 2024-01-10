@@ -53,7 +53,7 @@ export class SpritePipeline {
                 format: navigator.gpu.getPreferredCanvasFormat(),
                 blend: {
                     color: {
-                        srcFactor: "one",
+                        srcFactor: "src-alpha",
                         dstFactor: "one-minus-src-alpha",
                         operation: "add"
                     },

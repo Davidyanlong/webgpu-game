@@ -32,7 +32,7 @@ export class Content {
             const height = parseInt(subTexture.getAttribute("height")!);
 
             const drawRect = new Rect(0, 0, width, height);
-            const sourceRect = new Rect(x, y, width, height);
+            const sourceRect = new Rect(x, y, width-1, height-1);
 
             this.sprites[name] = new Sprite(this.spriteSheet, drawRect, sourceRect)
         })
