@@ -7,6 +7,7 @@ export class Content {
     public static ufoRedTexture: Texture
     public static uvTexture: Texture;
     public static spriteSheet:Texture
+    public static backgroundTexture: Texture;
 
     public static sprites: { [id: string]: Sprite } = {}
 
@@ -15,6 +16,8 @@ export class Content {
         this.ufoRedTexture = await Texture.createTextureFromURL(device, "assets/PNG/ufoRed.png");
         this.uvTexture = await Texture.createTextureFromURL(device, "assets/awesomeface.png");
         this.spriteSheet = await Texture.createTextureFromURL(device, "assets/Spritesheet/sheet.png");
+        this.backgroundTexture = await Texture.createTextureFromURL(device, "assets/Backgrounds/purple.png");
+        
         await this.loadSpriteSheet()
     }
 
