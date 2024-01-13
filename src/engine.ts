@@ -18,8 +18,7 @@ export class Engine {
   public onUpdate =(deltaTime: number) =>{}
   public onDraw = () => {}
 
-  constructor() {
-  }
+  constructor() {}
   public async initalize() {
     this.canvas = document.getElementById("canvasDom") as HTMLCanvasElement;
     if (this.canvas.width != this.canvas.clientWidth) {

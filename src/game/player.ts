@@ -15,7 +15,7 @@ export class Player {
     #sourceRect: Rect;
     #texture: Texture;
 
-    public readonly collider:CircleCollider = new CircleCollider()
+    public readonly collider: CircleCollider = new CircleCollider()
     constructor(
         private inputManger: InputManger,
         private gameWidth: number,
@@ -26,6 +26,9 @@ export class Player {
         this.drawRect = playerSprite.drawRect.copy();
     }
 
+    /**
+     * 小飞机始终在屏幕内
+     */
     public clampToBounds(): void {
         if (this.drawRect.x < 0) {
             this.drawRect.x = 0;

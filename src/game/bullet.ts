@@ -2,6 +2,7 @@ import { CircleCollider } from "../circle-collider"
 import { Content } from "../content"
 import { Rect } from "../rect"
 import { SpriteRenderer } from "../sprite-renderer"
+import { Texture } from "../texture"
 import { Player } from "./player"
 
 

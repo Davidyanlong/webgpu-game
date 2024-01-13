@@ -16,7 +16,7 @@ export class BufferUtil {
     }
 
     public static createIndexBuffer(device: GPUDevice, data: Uint16Array): GPUBuffer {
-
+        console.log(data.length)
         const buffer = device.createBuffer({
             size: data.byteLength,
             usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST,

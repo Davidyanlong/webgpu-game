@@ -16,11 +16,11 @@ export class Background {
     update(dt: number) {
         this.#drawRect.y += BACKGROUND_SCROLL_SPEED * dt;
         this.#drawRect2.y = this.#drawRect.y - this.gameHeight;
-        if (this.#drawRect.y >  this.gameHeight) {
+        if (this.#drawRect.y > this.gameHeight) {
 
             let temp = this.#drawRect
-            this.#drawRect= this.#drawRect2
-            this.#drawRect2= temp
+            this.#drawRect = this.#drawRect2
+            this.#drawRect2 = temp
         }
     }
 

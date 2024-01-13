@@ -1,38 +1,38 @@
 struct VertexOut {
-    @builtin(position) position:vec4f,
-    @location(0) texCoord:vec2f,
-    @location(1) color:vec4f,
+    @builtin(position) position : vec4f,
+    @location(0) texCoord : vec2f,
+    @location(1) color : vec4f,
 
 };
 
 @group(0) @binding(0)
-var<uniform> projectionViewMatrix:mat4x4f;
+var<uniform> projectionViewMatrix : mat4x4f;
 
 @vertex
 fn vertexMain(
-    @location(0) pos:vec2f,
-    @location(1) texCoord:vec2f,
-    @location(2) color:vec3f,
+@location(0) pos : vec2f,
+@location(1) texCoord : vec2f,
+@location(2) color : vec3f,
 
-)->VertexOut
+) -> VertexOut
 {
-    var output:VertexOut;
+    var output : VertexOut;
 
-    output.position = projectionViewMatrix * vec4f(pos, 0.0,1.0);
-    output.color = vec4f(color,1.0);
+    output.position = projectionViewMatrix * vec4f(pos, 0.0, 1.0);
+    output.color = vec4f(color, 1.0);
     output.texCoord = texCoord;
     return output;
 }
 
 @group(1) @binding(0)
-var texSampler:sampler;
+var texSampler : sampler;
 
 @group(1) @binding(1)
-var tex:texture_2d<f32>;
+var tex : texture_2d<f32>;
 
 
 @fragment
-fn fragmentMain(@location(0) texCoord:vec2f, @location(1) color:vec4f)->@location(0) vec4f
+fn fragmentMain(@location(0) texCoord : vec2f, @location(1) color : vec4f) -> @location(0) vec4f
 {
     var textureColor = textureSample(tex, texSampler, texCoord);
     return color * textureColor;

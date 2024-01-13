@@ -27,7 +27,7 @@ export class SpriteRenderer {
     #camera: Camera;
     #passEncoder!: GPURenderPassEncoder;
     /**
-     * pipelines create for texture
+     * pipelines create for texture, 每一个纹理一个渲染管线
      */
     #pipelinePerTexture: { [id: string]: SpritePipeline } = {}
 
@@ -154,8 +154,13 @@ export class SpriteRenderer {
 
     }
 
-    public drawSpriteSource(texture: Texture, rect: Rect, sourceRect: Rect,
-        color = this.#defaultColor, rotation = 0, rotationAnchor:vec2 | null= null) {
+    public drawSpriteSource(
+        texture: Texture,
+        rect: Rect,
+        sourceRect: Rect,
+        color = this.#defaultColor,
+        rotation = 0,
+        rotationAnchor: vec2 | null = null) {
 
         if (this.#currentTexture != texture) {
             this.#currentTexture = texture
@@ -179,28 +184,34 @@ export class SpriteRenderer {
 
         let i = batchDrawCall.instanceCount * FLOATS_PER_SPRITE;
 
+        // 计算两个点的UV坐标
         let u0 = sourceRect.x / texture.width;
         let v0 = sourceRect.y / texture.height;
+
         let u1 = (sourceRect.x + sourceRect.width) / texture.width;
         let v1 = (sourceRect.y + sourceRect.height) / texture.height;
 
+        // 四个顶点的位置
         this.#v0[0] = rect.x;
         this.#v0[1] = rect.y;
+
         this.#v1[0] = rect.x + rect.width;
         this.#v1[1] = rect.y;
+
         this.#v2[0] = rect.x + rect.width;
         this.#v2[1] = rect.y + rect.height;
+
         this.#v3[0] = rect.x;
         this.#v3[1] = rect.y + rect.height;
 
         if (rotation != 0) {
-            if(rotationAnchor === null){
+            if (rotationAnchor === null) {
                 vec2.copy(this.#rotationOrigin, this.#v0)
-            }else{
+            } else {
                 this.#rotationOrigin[0] = this.#v0[0] + rotationAnchor[0] * rect.width;
                 this.#rotationOrigin[1] = this.#v0[1] + rotationAnchor[1] * rect.height;
             }
-            
+
             vec2.rotate(this.#v0, this.#v0, this.#rotationOrigin, rotation)
             vec2.rotate(this.#v1, this.#v1, this.#rotationOrigin, rotation)
             vec2.rotate(this.#v2, this.#v2, this.#rotationOrigin, rotation)

@@ -1,5 +1,6 @@
 export class Texture {
-    constructor(public texture: GPUTexture, 
+    constructor(
+        public texture: GPUTexture, 
         public sampler: GPUSampler, 
         public id:string, 
         public width:number,
@@ -13,6 +14,7 @@ export class Texture {
      */
     public static async createTexture(device: GPUDevice, image: HTMLImageElement): Promise<Texture> {
         const texture = device.createTexture({
+            label:  image.src,
             size: { width: image.width, height: image.height },
             format: "rgba8unorm",
             usage: GPUTextureUsage.COPY_DST | GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.RENDER_ATTACHMENT

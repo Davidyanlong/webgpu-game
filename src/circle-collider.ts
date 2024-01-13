@@ -5,10 +5,10 @@ export class CircleCollider {
     public x: number = 0
     public y: number = 0
 
-    update(drawRect:Rect) {
+    update(drawRect: Rect) {
         let radius = drawRect.width / 2
 
-        if(drawRect.height < drawRect.width) {
+        if (drawRect.height < drawRect.width) {
             radius = drawRect.height / 2
         }
         this.x = drawRect.x + this.radius
