@@ -15,6 +15,7 @@ export class Content {
     public static spriteSheet: Texture
     public static backgroundTexture: Texture;
     public static explosionTexture: Texture;
+    public static iceTexture: Texture;
 
     public static sprites: { [id: string]: Sprite } = {}
 
@@ -26,7 +27,7 @@ export class Content {
         this.backgroundTexture = await Texture.createTextureFromURL(device, "assets/Backgrounds/purple.png");
 
         this.explosionTexture = await Texture.createTextureFromURL(device, "assets/explosion.png");
-
+        this.iceTexture = await Texture.createTextureFromURL(device, "assets/ice03.jpg");
         await this.loadSpriteSheet()
 
         this.spriteFont = await this.loadSnowBSpriteFont(device, "assets/Vector/SpriteFont.xml", "assets/Vector/SpriteFont.png")

@@ -27,8 +27,14 @@ engine.initalize().then(async () => {
         engine.gameBounds[1],
         hightScore);
 
-    const postProcessEffect = await engine.effectsFactory.createPostProcessEffect();
+    const postProcessEffect = await engine.effectsFactory.createTextureEffect();
+    postProcessEffect.setCombineTexture(Content.iceTexture)  
+    postProcessEffect.mixValue = 0.25  
 
+    document.getElementById("mix")?.addEventListener("input", (e)=>{
+        const target = e.target as HTMLInputElement;
+        postProcessEffect.mixValue = parseFloat(target.value)
+    })
 
     engine.onUpdate = (dt: number) => {
         player.update(dt)
@@ -39,7 +45,7 @@ engine.initalize().then(async () => {
     }
 
     engine.onDraw = () => {
-        engine.setDestinationTexture(postProcessEffect.texture.texture);
+        engine.setDestinationTexture(postProcessEffect.screenTexture.texture);
         background.draw(engine.spriteRenderer)
         player.draw(engine.spriteRenderer)
         enemyManager.draw(engine.spriteRenderer)
