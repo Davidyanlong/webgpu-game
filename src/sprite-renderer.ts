@@ -364,7 +364,7 @@ export class SpriteRenderer {
             batchDrawCall.vertexData[27 + i] = color.b;
 
            
-            batchDrawCall.instanceCount++;hcd
+            batchDrawCall.instanceCount++;
             advanceChar += spriteFontChar.advance;
 
             if (batchDrawCall.instanceCount >= MAX_NUMBER_OF_SPRITES) {

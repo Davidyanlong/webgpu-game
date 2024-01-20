@@ -1,10 +1,10 @@
 export class Texture {
     constructor(
-        public texture: GPUTexture, 
-        public sampler: GPUSampler, 
-        public id:string, 
-        public width:number,
-        public height:number) { }
+        public texture: GPUTexture,
+        public sampler: GPUSampler,
+        public id: string,
+        public width: number,
+        public height: number) { }
 
     /**
      * Create a placeholder texture for WebGPU texture and sampler
@@ -14,7 +14,7 @@ export class Texture {
      */
     public static async createTexture(device: GPUDevice, image: HTMLImageElement): Promise<Texture> {
         const texture = device.createTexture({
-            label:  image.src,
+            label: image.src,
             size: { width: image.width, height: image.height },
             format: "rgba8unorm",
             usage: GPUTextureUsage.COPY_DST | GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.RENDER_ATTACHMENT
@@ -34,6 +34,24 @@ export class Texture {
         });
 
         return new Texture(texture, sampler, image.src, image.width, image.height);
+    }
+
+    public static async createEmptyTexture(device: GPUDevice,
+         width: number, 
+         height: number, 
+         format:GPUTextureFormat = 'bgra8unorm'): Promise<Texture> {
+        const texture = device.createTexture({
+            label: 'render target',
+            size: { width: width, height: height },
+            format: format,
+            usage: GPUTextureUsage.COPY_DST | GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.RENDER_ATTACHMENT
+        });
+        const sampler = device.createSampler({
+            magFilter: "nearest",
+            minFilter: "nearest",
+        });
+
+        return new Texture(texture, sampler, '', width, height);
     }
 
     /**
