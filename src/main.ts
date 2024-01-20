@@ -11,7 +11,7 @@ import { Color } from "./color";
 import { HeightScore } from "./game/high-score";
 
 const engine = new Engine()
-engine.initalize().then(() => {
+engine.initalize().then(async () => {
     const player = new Player(engine.inputManger,
         engine.gameBounds[0],
         engine.gameBounds[1])
@@ -25,7 +25,10 @@ engine.initalize().then(() => {
         bulletManger,
         engine.gameBounds[0],
         engine.gameBounds[1],
-        hightScore)
+        hightScore);
+
+    const postProcessEffect = await engine.effectsFactory.createPostProcessEffect();
+
 
     engine.onUpdate = (dt: number) => {
         player.update(dt)
@@ -36,12 +39,15 @@ engine.initalize().then(() => {
     }
 
     engine.onDraw = () => {
+        engine.setDestinationTexture(postProcessEffect.texture.texture);
         background.draw(engine.spriteRenderer)
         player.draw(engine.spriteRenderer)
         enemyManager.draw(engine.spriteRenderer)
         bulletManger.draw(engine.spriteRenderer)
         explosionManager.draw(engine.spriteRenderer)
         hightScore.draw(engine.spriteRenderer)
+
+        postProcessEffect.draw(engine.getCanvasTexture().createView())
     }
     engine.draw();
 })
