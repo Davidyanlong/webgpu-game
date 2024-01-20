@@ -5,6 +5,7 @@ import { Color } from "./color";
 import { Rect } from "./rect";
 import { SpritePipeline } from "./sprite-pipeline";
 import { Texture } from "./texture";
+import { SpriteFont } from "./sprite-font";
 
 const MAX_NUMBER_OF_SPRITES = 10000;
 const FLOAT_PER_VERTEX = 7;
@@ -260,6 +261,116 @@ export class SpriteRenderer {
         if (batchDrawCall.instanceCount >= MAX_NUMBER_OF_SPRITES) {
             const newBatchDrawCall = new BatchDrawCall(this.#pipelinePerTexture[texture.id]);
             this.#batchDrawCallPerTexture[texture.id].push(newBatchDrawCall);
+        }
+
+
+    }
+    // https://snowb.org/
+    public drawString(spriteFont: SpriteFont,
+        text: string,
+        position: vec2,
+        color = this.#defaultColor,
+        scale = 1) {
+
+        const texture = spriteFont.texture
+
+        if (this.#currentTexture != texture) {
+            this.#currentTexture = texture
+
+            let pipeline = this.#pipelinePerTexture[texture.id]
+            if (!pipeline) {
+                pipeline = SpritePipeline.create(this.device, texture, this.#projectviewMatrixBuffer)
+                this.#pipelinePerTexture[texture.id] = pipeline
+            }
+            let batchDrawCalls = this.#batchDrawCallPerTexture[texture.id]
+            if (!batchDrawCalls) {
+                this.#batchDrawCallPerTexture[texture.id] = []
+            }
+        }
+        const arrayofBatchDrawCalls = this.#batchDrawCallPerTexture[texture.id]
+        let batchDrawCall = arrayofBatchDrawCalls[arrayofBatchDrawCalls.length - 1]
+        if (!batchDrawCall) {
+            batchDrawCall = new BatchDrawCall(this.#pipelinePerTexture[texture.id])
+            this.#batchDrawCallPerTexture[texture.id].push(batchDrawCall)
+        }
+
+        let advanceChar = 0
+        for (let j = 0; j < text.length; j++) {
+
+            const charCode = text[j].charCodeAt(0)
+            const spriteFontChar = spriteFont.getChar(charCode)
+
+            let i = batchDrawCall.instanceCount * FLOATS_PER_SPRITE;
+
+            const x = position[0] + (spriteFontChar.offset[0] + advanceChar) * scale
+            const y = position[1] + spriteFontChar.offset[1] * scale;
+            const width = spriteFontChar.size[0] * scale;
+            const height = spriteFontChar.size[1] * scale;
+
+
+            // 四个顶点的位置
+            this.#v0[0] = x;
+            this.#v0[1] = y;
+
+            this.#v1[0] = x + width;
+            this.#v1[1] = y;
+
+            this.#v2[0] = x + width;
+            this.#v2[1] = y + height;
+
+            this.#v3[0] = x;
+            this.#v3[1] = y + height;
+
+            const a = spriteFontChar.textureCoords.topLeft;
+            const b = spriteFontChar.textureCoords.topRight;
+            const c = spriteFontChar.textureCoords.bottomRight;
+            const d = spriteFontChar.textureCoords.bottomLeft;
+
+
+            // top left
+            batchDrawCall.vertexData[0 + i] = this.#v0[0];
+            batchDrawCall.vertexData[1 + i] = this.#v0[1];
+            batchDrawCall.vertexData[2 + i] = a[0];
+            batchDrawCall.vertexData[3 + i] = a[1];
+            batchDrawCall.vertexData[4 + i] = color.r;
+            batchDrawCall.vertexData[5 + i] = color.g;
+            batchDrawCall.vertexData[6 + i] = color.b;
+
+            // top right
+            batchDrawCall.vertexData[7 + i] = this.#v1[0];
+            batchDrawCall.vertexData[8 + i] = this.#v1[1];
+            batchDrawCall.vertexData[9 + i] = b[0];
+            batchDrawCall.vertexData[10 + i] = b[1];
+            batchDrawCall.vertexData[11 + i] = color.r;
+            batchDrawCall.vertexData[12 + i] = color.g;
+            batchDrawCall.vertexData[13 + i] = color.b;
+
+            // bottom right
+            batchDrawCall.vertexData[14 + i] = this.#v2[0];
+            batchDrawCall.vertexData[15 + i] = this.#v2[1];
+            batchDrawCall.vertexData[16 + i] = c[0];
+            batchDrawCall.vertexData[17 + i] = c[1];
+            batchDrawCall.vertexData[18 + i] = color.r;
+            batchDrawCall.vertexData[19 + i] = color.g;
+            batchDrawCall.vertexData[20 + i] = color.b;
+
+            // bottom left
+            batchDrawCall.vertexData[21 + i] = this.#v3[0];
+            batchDrawCall.vertexData[22 + i] = this.#v3[1];
+            batchDrawCall.vertexData[23 + i] = d[0];
+            batchDrawCall.vertexData[24 + i] = d[1];
+            batchDrawCall.vertexData[25 + i] = color.r;
+            batchDrawCall.vertexData[26 + i] = color.g;
+            batchDrawCall.vertexData[27 + i] = color.b;
+
+           
+            batchDrawCall.instanceCount++;hcd
+            advanceChar += spriteFontChar.advance;
+
+            if (batchDrawCall.instanceCount >= MAX_NUMBER_OF_SPRITES) {
+                batchDrawCall = new BatchDrawCall(this.#pipelinePerTexture[texture.id]);
+                this.#batchDrawCallPerTexture[texture.id].push(batchDrawCall);
+            }
         }
 
 

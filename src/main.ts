@@ -1,10 +1,14 @@
 
+import { vec2 } from "gl-matrix";
+import { Content } from "./content";
 import { Engine } from "./engine";
 import { Background } from "./game/background";
 import { BulletManger } from "./game/bullet-manager";
 import { EnemyManager } from "./game/enemy-manager";
 import { ExplosionManager } from "./game/explosion-manager";
 import { Player } from "./game/player";
+import { Color } from "./color";
+import { HeightScore } from "./game/high-score";
 
 const engine = new Engine()
 engine.initalize().then(() => {
@@ -15,11 +19,13 @@ engine.initalize().then(() => {
     const background = new Background(engine.gameBounds[0], engine.gameBounds[1])
     const explosionManager = new ExplosionManager()
     const bulletManger = new BulletManger(player)
-    const enemyManager = new EnemyManager(player, 
-        explosionManager, 
+    const hightScore = new HeightScore()
+    const enemyManager = new EnemyManager(player,
+        explosionManager,
         bulletManger,
-        engine.gameBounds[0], 
-        engine.gameBounds[1])
+        engine.gameBounds[0],
+        engine.gameBounds[1],
+        hightScore)
 
     engine.onUpdate = (dt: number) => {
         player.update(dt)
@@ -35,6 +41,7 @@ engine.initalize().then(() => {
         enemyManager.draw(engine.spriteRenderer)
         bulletManger.draw(engine.spriteRenderer)
         explosionManager.draw(engine.spriteRenderer)
+        hightScore.draw(engine.spriteRenderer)
     }
     engine.draw();
 })
