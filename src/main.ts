@@ -27,14 +27,21 @@ engine.initalize().then(async () => {
         engine.gameBounds[1],
         hightScore);
 
-    const postProcessEffect = await engine.effectsFactory.createTextureEffect();
-    postProcessEffect.setCombineTexture(Content.iceTexture)  
-    postProcessEffect.mixValue = 0.25  
+    const postProcessEffect = await engine.effectsFactory.createBlurEffect();
 
-    document.getElementById("mix")?.addEventListener("input", (e)=>{
-        const target = e.target as HTMLInputElement;
-        postProcessEffect.mixValue = parseFloat(target.value)
+    postProcessEffect.doHorizontalPass = true;
+    postProcessEffect.doVerticalPass = true;
+
+    document.getElementById("horizontal")?.addEventListener('click', (e) => {
+        postProcessEffect.doHorizontalPass = !postProcessEffect.doHorizontalPass;
+        (e.target as HTMLInputElement).checked = postProcessEffect.doHorizontalPass
     })
+
+    document.getElementById("vertical")?.addEventListener('click', (e) => {
+        postProcessEffect.doVerticalPass = !postProcessEffect.doVerticalPass;
+        (e.target as HTMLInputElement).checked = postProcessEffect.doVerticalPass
+    })
+
 
     engine.onUpdate = (dt: number) => {
         player.update(dt)
@@ -45,7 +52,12 @@ engine.initalize().then(async () => {
     }
 
     engine.onDraw = () => {
-        engine.setDestinationTexture(postProcessEffect.screenTexture.texture);
+        const renderTexture = postProcessEffect.getRenderTexture();
+        if (renderTexture) {
+            engine.setDestinationTexture(renderTexture.texture);
+        } else {
+            engine.setDestinationTexture(null)
+        }
         background.draw(engine.spriteRenderer)
         player.draw(engine.spriteRenderer)
         enemyManager.draw(engine.spriteRenderer)
@@ -53,7 +65,9 @@ engine.initalize().then(async () => {
         explosionManager.draw(engine.spriteRenderer)
         hightScore.draw(engine.spriteRenderer)
 
-        postProcessEffect.draw(engine.getCanvasTexture().createView())
+        if (renderTexture) {
+            postProcessEffect.draw(engine.getCanvasTexture().createView())
+        }
     }
     engine.draw();
 })
