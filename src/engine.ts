@@ -4,6 +4,7 @@ import { SpriteRenderer } from './sprite-renderer';
 import { InputManger } from './input-manager';
 import { vec2 } from 'gl-matrix';
 import { EffectFactory } from './effects-factory';
+import { Texture } from './texture';
 
 export class Engine {
   #canvas!: HTMLCanvasElement;
@@ -13,11 +14,14 @@ export class Engine {
   #passEncoder!: GPURenderPassEncoder;
   // if this is null, we are rendering to the screen
   #destinationTexture: GPUTexture | null = null;
+  #destinationTexture2: GPUTexture | null = null;
 
   public spriteRenderer!: SpriteRenderer;
   public inputManger!: InputManger;
   public effectsFactory!: EffectFactory;
   public gameBounds = vec2.create()
+
+  public brightnessTexture2!: Texture;
 
   public onUpdate = (deltaTime: number) => { }
   public onDraw = () => { }
@@ -25,6 +29,11 @@ export class Engine {
   public setDestinationTexture(texture: GPUTexture | null) {
     this.#destinationTexture = texture;
   }
+
+  public setDestinationTexture2(texture: GPUTexture | null) {
+    this.#destinationTexture2 = texture;
+  }
+
   public getCanvasTexture():GPUTexture {
     return this.#context.getCurrentTexture()
   }
@@ -66,6 +75,7 @@ export class Engine {
 
     this.inputManger = new InputManger()
     this.effectsFactory = new EffectFactory(this.#device, this.#canvas.width, this.#canvas.height);
+    this.#destinationTexture2 = (await Texture.createEmptyTexture(this.#device, this.#canvas.width, this.#canvas.height, "bgra8unorm")).texture;
   }
 
   public draw() {
@@ -74,7 +84,7 @@ export class Engine {
     this.#lastTime = now;
     this.onUpdate(deltaTime)
     const commandEncoder = this.#device.createCommandEncoder();
-    const textureView = this.#destinationTexture != null ?
+    const sceneTextureView  = this.#destinationTexture != null ?
       this.#destinationTexture.createView() :
       this.#context.getCurrentTexture().createView();
     const renderPassDescription: GPURenderPassDescriptor = {
@@ -83,7 +93,13 @@ export class Engine {
           clearValue: { r: 0.8, g: 0.8, b: 0.8, a: 1.0 },
           loadOp: "clear",
           storeOp: "store",
-          view: textureView
+          view: sceneTextureView 
+        },
+        {
+          clearValue: { r: 0.8, g: 0.8, b: 0.8, a: 1.0 },
+          loadOp: "clear",
+          storeOp: "store",
+          view: this.#destinationTexture2!.createView()
         }
       ]
     }

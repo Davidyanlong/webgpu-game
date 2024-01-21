@@ -1,38 +1,36 @@
 import { BufferUtil } from "./buffer-util";
 import { Texture } from "./texture";
-import shaderSource from "./shaders/blur-effects.wgsl?raw";
+import shaderSource from "./shaders/blur-effects.wgsl?raw"
 
 export class BlurEffect {
 
-    #horizontalPassPipeline!: GPURenderPipeline;
+     #horizontalPassPipeline!: GPURenderPipeline;
     #horizontalPassRenderTexture!: Texture;
     #horizontalPassBindGroup!: GPUBindGroup;
 
+     #verticalPassPipeline!: GPURenderPipeline;
+     #verticalPassRenderTexture!: Texture;
+     #verticalPassBindGroup!: GPUBindGroup;
 
-    #verticalPassPipeline!: GPURenderPipeline;
-    #verticalPassRenderTexture!: Texture;
-    #verticalPassBindGroup!: GPUBindGroup;
-
-
-    public doHorizontalPass: boolean = true;
-    public doVerticalPass: boolean = true;
-    
-    #gpuBuffer:GPUBuffer;
-
+    public doHorizontalPass = true;
+    public doVerticalPass = true;
+    #gpuBuffer!: GPUBuffer;
     private createPipeline(shaderSource: string,
         textureBindGroupLayout: GPUBindGroupLayout,
-        horizontal: boolean): GPURenderPipeline {
-
+        horizontal: boolean
+    ): GPURenderPipeline {
         const shaderModule = this.device.createShaderModule({
             code: shaderSource
         });
+
+
         const desc: GPURenderPipelineDescriptor = {
             layout: this.device.createPipelineLayout({
                 bindGroupLayouts: [textureBindGroupLayout]
             }),
             vertex: {
                 module: shaderModule,
-                entryPoint: 'vertexMain',
+                entryPoint: "vertexMain",
                 buffers: [
                     {
                         arrayStride: 4 * Float32Array.BYTES_PER_ELEMENT,
@@ -40,12 +38,12 @@ export class BlurEffect {
                             {
                                 shaderLocation: 0,
                                 offset: 0,
-                                format: 'float32x2'
+                                format: "float32x2"
                             },
                             {
                                 shaderLocation: 1,
                                 offset: 2 * Float32Array.BYTES_PER_ELEMENT,
-                                format: 'float32x2'
+                                format: "float32x2"
                             }
                         ]
                     }
@@ -56,37 +54,42 @@ export class BlurEffect {
                 entryPoint: horizontal ? "fragmentMainHorizontal" : "fragmentMainVertical",
                 targets: [
                     {
-                        format: 'bgra8unorm'
+                        format: "bgra8unorm"
                     }
                 ]
             },
             primitive: {
-                topology: 'triangle-list'
+                topology: "triangle-list"
             }
-        }
+        };
+
         return this.device.createRenderPipeline(desc);
     }
+
+   
+
+
 
     public getRenderTexture(): Texture | null {
         if (this.doHorizontalPass) {
             return this.#horizontalPassRenderTexture;
         }
-
         if (this.doVerticalPass) {
             return this.#verticalPassRenderTexture;
         }
+
         return null;
     }
 
-
     constructor(private device: GPUDevice,
         public width: number,
-        public height: number) { }
+        public height: number) {
+
+    }
 
     public async initialize() {
-        this.#horizontalPassRenderTexture = await Texture.createEmptyTexture(this.device, this.width, this.height, 'bgra8unorm');
-        this.#verticalPassRenderTexture = await Texture.createEmptyTexture(this.device, this.width, this.height, 'bgra8unorm');
-
+        this.#horizontalPassRenderTexture = await Texture.createEmptyTexture(this.device, this.width, this.height, "bgra8unorm");
+        this.#verticalPassRenderTexture = await Texture.createEmptyTexture(this.device, this.width, this.height, "bgra8unorm");
 
         this.#gpuBuffer = BufferUtil.createVertexBuffer(this.device, new Float32Array([
             // pos(x,y) tex(u,v)
@@ -135,7 +138,7 @@ export class BlurEffect {
                     resource: this.#horizontalPassRenderTexture.texture.createView()
                 }
             ]
-        })
+        });
 
         this.#verticalPassBindGroup = this.device.createBindGroup({
             layout: textureBindGroupLayout,
@@ -149,27 +152,29 @@ export class BlurEffect {
                     resource: this.#verticalPassRenderTexture.texture.createView()
                 }
             ]
-        })
-
-        this.#horizontalPassPipeline = this.createPipeline(shaderSource, textureBindGroupLayout, true)
-        this.#verticalPassPipeline = this.createPipeline(shaderSource, textureBindGroupLayout, false)
+        });
 
 
+        this.#horizontalPassPipeline = this.createPipeline(shaderSource, textureBindGroupLayout, true);
+        this.#verticalPassPipeline = this.createPipeline(shaderSource, textureBindGroupLayout, false);
     }
-    public draw(destinationTexture: GPUTextureView) {
-        // Horizontal pass
-        if (this.doHorizontalPass) {
-            const textureView = this.doVerticalPass ?
-                this.#verticalPassRenderTexture.texture.createView() :
-                destinationTexture;
+
+    public draw(destinationTextureView: GPUTextureView) {
+
+        // HORIZONTAL PASS 
+        if(this.doHorizontalPass)
+        {
+            const textureView = this.doVerticalPass ? 
+                this.#verticalPassRenderTexture.texture.createView() : 
+                destinationTextureView
 
             const commandEncoder = this.device.createCommandEncoder();
             const passEncoder = commandEncoder.beginRenderPass({
                 colorAttachments: [
                     {
                         view: textureView,
-                        loadOp: 'clear',
-                        storeOp: 'store'
+                        loadOp: "clear",
+                        storeOp: "store",
                     }
                 ]
             });
@@ -178,20 +183,21 @@ export class BlurEffect {
             passEncoder.setVertexBuffer(0, this.#gpuBuffer);
             passEncoder.setBindGroup(0, this.#horizontalPassBindGroup);
             passEncoder.draw(6, 1, 0, 0);
-            passEncoder.end();
 
+            passEncoder.end();
             this.device.queue.submit([commandEncoder.finish()]);
         }
 
-        // Vertical Pass
-        if (this.doVerticalPass) {
+        // VERTICAL PASS 
+        if(this.doVerticalPass)
+        {
             const commandEncoder = this.device.createCommandEncoder();
             const passEncoder = commandEncoder.beginRenderPass({
                 colorAttachments: [
                     {
-                        view: destinationTexture,
-                        loadOp: 'clear',
-                        storeOp: 'store'
+                        view: destinationTextureView,
+                        loadOp: "clear",
+                        storeOp: "store",
                     }
                 ]
             });
@@ -200,8 +206,8 @@ export class BlurEffect {
             passEncoder.setVertexBuffer(0, this.#gpuBuffer);
             passEncoder.setBindGroup(0, this.#verticalPassBindGroup);
             passEncoder.draw(6, 1, 0, 0);
-            passEncoder.end();
 
+            passEncoder.end();
             this.device.queue.submit([commandEncoder.finish()]);
         }
     }

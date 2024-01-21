@@ -27,20 +27,9 @@ engine.initalize().then(async () => {
         engine.gameBounds[1],
         hightScore);
 
-    const postProcessEffect = await engine.effectsFactory.createBlurEffect();
+    const postProcessEffect = await engine.effectsFactory.createBloomEffect();
 
-    postProcessEffect.doHorizontalPass = true;
-    postProcessEffect.doVerticalPass = true;
 
-    document.getElementById("horizontal")?.addEventListener('click', (e) => {
-        postProcessEffect.doHorizontalPass = !postProcessEffect.doHorizontalPass;
-        (e.target as HTMLInputElement).checked = postProcessEffect.doHorizontalPass
-    })
-
-    document.getElementById("vertical")?.addEventListener('click', (e) => {
-        postProcessEffect.doVerticalPass = !postProcessEffect.doVerticalPass;
-        (e.target as HTMLInputElement).checked = postProcessEffect.doVerticalPass
-    })
 
 
     engine.onUpdate = (dt: number) => {
@@ -52,22 +41,17 @@ engine.initalize().then(async () => {
     }
 
     engine.onDraw = () => {
-        const renderTexture = postProcessEffect.getRenderTexture();
-        if (renderTexture) {
-            engine.setDestinationTexture(renderTexture.texture);
-        } else {
-            engine.setDestinationTexture(null)
-        }
+
+        engine.setDestinationTexture(postProcessEffect.sceneTexture.texture);
+        engine.setDestinationTexture2(postProcessEffect.brightnessTexture.texture);
+
         background.draw(engine.spriteRenderer)
         player.draw(engine.spriteRenderer)
         enemyManager.draw(engine.spriteRenderer)
         bulletManger.draw(engine.spriteRenderer)
         explosionManager.draw(engine.spriteRenderer)
         hightScore.draw(engine.spriteRenderer)
-
-        if (renderTexture) {
-            postProcessEffect.draw(engine.getCanvasTexture().createView())
-        }
+        postProcessEffect.draw(engine.getCanvasTexture().createView())
     }
     engine.draw();
 })
